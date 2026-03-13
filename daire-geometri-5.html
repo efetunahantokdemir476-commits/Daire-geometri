@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>🔵 Daire - YKS Geometri</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#06090f;
+  --surface:#0d1219;
+  --surface2:#131a24;
+  --border:rgba(99,179,237,.12);
+  --blue:#63b3ed;
+  --cyan:#4fd1c7;
+  --gold:#f6ad55;
+  --red:#fc8181;
+  --green:#68d391;
+  --purple:#b794f4;
+  --text:#e2e8f0;
+  --muted:#718096;
+  --dim:#2d3748;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;
+  background:radial-gradient(ellipse 70% 50% at 50% -20%,rgba(99,179,237,.06) 0%,transparent 60%);
+  pointer-events:none;z-index:0;}
+
+/* ── NAV ── */
+.nav{position:sticky;top:0;z-index:100;background:rgba(6,9,15,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding:0 20px;}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:0;overflow-x:auto;}
+.nav-tab{padding:16px 20px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
+  transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;}
+.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.nav-tab:hover{color:var(--text);}
+.nav-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--blue);padding:14px 0;margin-right:24px;white-space:nowrap;}
+
+/* ── LAYOUT ── */
+.page{display:none;max-width:1200px;margin:0 auto;padding:32px 20px 60px;position:relative;z-index:1;}
+.page.active{display:block;}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;}
+@media(max-width:768px){.two-col{grid-template-columns:1fr;}}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;}
+.card-title{font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--blue);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.card-title::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--blue);display:inline-block;}
+
+/* ── CANVAS ── */
+canvas{width:100%;border-radius:10px;display:block;cursor:grab;touch-action:none;}
+canvas:active{cursor:grabbing;}
+
+/* ── FORMÜLLER ── */
+.formula-box{background:var(--surface2);border:1px solid rgba(99,179,237,.2);border-radius:10px;
+  padding:16px 20px;margin:12px 0;text-align:center;}
+.formula{font-family:'DM Mono',monospace;font-size:1.15rem;color:var(--cyan);letter-spacing:.04em;}
+.formula-name{font-size:.72rem;color:var(--muted);margin-top:4px;}
+
+/* ── ISPAT ADIMI ── */
+.step-container{margin-top:16px;}
+.step{display:none;animation:fadeIn .3s ease;}
+.step.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.step-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#06090f;
+  font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-title{font-size:.85rem;font-weight:600;color:var(--text);}
+.step-body{font-size:.82rem;color:var(--muted);line-height:1.8;padding-left:38px;}
+.step-body b{color:var(--text);}
+.step-formula{font-family:'DM Mono',monospace;color:var(--cyan);background:rgba(99,179,237,.08);
+  padding:8px 14px;border-radius:6px;margin:8px 0;display:inline-block;font-size:.9rem;}
+.step-nav{display:flex;gap:10px;margin-top:16px;align-items:center;}
+.btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-size:.78rem;font-weight:600;
+  font-family:'DM Sans',sans-serif;transition:all .15s;letter-spacing:.04em;}
+.btn-primary{background:var(--blue);color:#06090f;}
+.btn-primary:hover{background:var(--cyan);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue);}
+.step-counter{font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;}
+
+/* ── SLIDER ── */
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;}
+.slider-label{font-size:.75rem;color:var(--muted);min-width:28px;font-family:'DM Mono',monospace;}
+.slider-val{font-size:.78rem;color:var(--cyan);min-width:50px;font-family:'DM Mono',monospace;text-align:right;}
+input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--dim);border-radius:2px;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--blue);cursor:pointer;}
+
+/* ── SONUÇ KARTLARI ── */
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.result-card{background:var(--surface2);border-radius:8px;padding:12px 14px;text-align:center;}
+.result-val{font-family:'DM Mono',monospace;font-size:1.2rem;color:var(--cyan);margin-bottom:2px;}
+.result-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+
+/* ── OSYM NOTLARI ── */
+.osym-box{background:rgba(246,173,85,.05);border:1px solid rgba(246,173,85,.2);
+  border-radius:8px;padding:12px 16px;margin-top:14px;}
+.osym-box .osym-title{font-size:.65rem;color:var(--gold);font-family:'DM Mono',monospace;
+  letter-spacing:.1em;margin-bottom:6px;}
+.osym-box p{font-size:.78rem;color:var(--muted);line-height:1.7;}
+.osym-box b{color:var(--text);}
+
+/* ── YKS SORULARI ── */
+.question-box{background:var(--surface2);border-left:3px solid var(--purple);border-radius:0 8px 8px 0;
+  padding:14px 16px;margin-top:12px;}
+.question-box .q-label{font-size:.62rem;color:var(--purple);font-family:'DM Mono',monospace;letter-spacing:.1em;margin-bottom:6px;}
+.question-box p{font-size:.82rem;color:var(--text);line-height:1.7;margin-bottom:10px;}
+.q-answer{display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--dim);}
+.q-answer.show{display:block;}
+.q-answer p{color:var(--green);font-size:.8rem;}
+.btn-answer{padding:6px 14px;border-radius:6px;border:1px solid rgba(183,148,244,.3);
+  background:transparent;color:var(--purple);font-size:.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* ── TEĞET KİRİŞ ÖZEL ── */
+.tablo{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:10px;}
+.tablo th{background:var(--surface2);color:var(--blue);padding:8px 12px;text-align:left;
+  font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.08em;border-bottom:1px solid var(--border);}
+.tablo td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted);}
+.tablo td:first-child{color:var(--text);font-weight:600;}
+.tablo tr:last-child td{border-bottom:none;}
+
+/* ── PROGRESS ── */
+.progress-bar{height:3px;background:var(--dim);border-radius:2px;margin:12px 0;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:2px;transition:width .3s;}
+
+/* ── BADGE ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.62rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;font-family:'DM Mono',monospace;}
+.badge-blue{background:rgba(99,179,237,.15);color:var(--blue);}
+.badge-gold{background:rgba(246,173,85,.15);color:var(--gold);}
+.badge-green{background:rgba(104,211,145,.15);color:var(--green);}
+
+/* ── TTS PANEL ── */
+.tts-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:rgba(6,9,15,.97);
+  border-top:1px solid rgba(99,179,237,.2);
+  backdrop-filter:blur(16px);
+  padding:12px 20px;
+  display:flex;align-items:center;gap:12px;
+  transform:translateY(100%);
+  transition:transform .3s ease;
+}
+.tts-bar.visible{transform:translateY(0);}
+.tts-btn{
+  width:40px;height:40px;border-radius:50%;
+  border:none;cursor:pointer;font-size:1rem;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .15s;
+  font-family:'DM Sans',sans-serif;
+}
+.tts-play{background:linear-gradient(135deg,#63b3ed,#4fd1c7);color:#06090f;}
+.tts-play:hover{transform:scale(1.08);}
+.tts-stop{background:rgba(252,129,129,.15);border:1px solid rgba(252,129,129,.3);color:#fc8181;}
+.tts-text{
+  flex:1;font-size:.8rem;color:var(--text);line-height:1.5;
+  font-family:'DM Sans',sans-serif;
+}
+.tts-text .tts-highlight{color:var(--cyan);font-weight:600;}
+.tts-progress{
+  height:3px;background:var(--dim);border-radius:2px;
+  margin-top:6px;overflow:hidden;
+}
+.tts-progress-fill{
+  height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));
+  border-radius:2px;transition:width .3s;
+}
+.tts-step-info{font-size:.65rem;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap;}
+.tts-toggle{
+  position:fixed;bottom:20px;right:20px;z-index:201;
+  width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,#63b3ed,#4fd1c7);
+  border:none;cursor:pointer;font-size:1.2rem;
+  box-shadow:0 4px 20px rgba(99,179,237,.4);
+  transition:all .2s;
+}
+.tts-toggle:hover{transform:scale(1.1);}
+.tts-toggle.active{background:linear-gradient(135deg,#fc8181,#f6ad55);}
+
+/* Anlatım animasyonu - adım vurgusu */
+.step.narrating{
+  background:rgba(99,179,237,.06);
+  border-radius:10px;
+  padding:12px;
+  border-left:3px solid var(--blue);
+}
+.cinematic-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:60px;
+  background:rgba(6,9,15,.0);
+  pointer-events:none;z-index:150;
+  transition:background .5s;
+}
+.cinematic-overlay.dim{background:rgba(6,9,15,.5);}
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-title">🔵 Daire</div>
+    <button class="nav-tab active" onclick="showPage('alan')">Alan & Çevre</button>
+    <button class="nav-tab" onclick="showPage('dilim')">Daire Dilimi</button>
+    <button class="nav-tab" onclick="showPage('kesit')">Daire Kesiti</button>
+    <button class="nav-tab" onclick="showPage('teget')">Teğet & Kiriş</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SAYFA 1: ALAN & ÇEVRE -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="page active" id="page-alan">
+  <div class="two-col">
+
+    <!-- SOL: ANİMASYON -->
+    <div>
+      <div class="card">
+        <div class="card-title">İnteraktif Daire</div>
+        <canvas id="c-alan" height="320"></canvas>
+        <div class="slider-row" style="margin-top:12px;">
+          <span class="slider-label">r</span>
+          <input type="range" min="20" max="130" value="80" oninput="updateAlan(this.value)" id="sl-alan">
+          <span class="slider-val" id="sv-alan">80</span>
+        </div>
+        <div class="result-grid">
+          <div class="result-card">
+            <div class="result-val" id="rv-alan-a">—</div>
+            <div class="result-lbl">Alan (πr²)</div>
+          </div>
+          <div class="result-card">
+            <div class="result-val" id="rv-alan-c">—</div>
+            <div class="result-lbl">Çevre (2πr)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- İspat animasyonu: daire → paralelkenar -->
+      <div class="card">
+        <div class="card-title">Alan İspat Animasyonu</div>
+        <canvas id="c-ispat" height="200"></canvas>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn btn-primary" onclick="playIspat()">▶ Animasyonu Başlat</button>
+          <button class="btn btn-ghost" onclick="resetIspat()">↺ Sıfırla</button>
+        </div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:8px;line-height:1.6;">
+          Daire <b>n</b> dilime bölünüp yeniden dizilince → <b>dikdörtgen</b> oluşur.<br>
+          Genişlik = <span style="color:var(--cyan);">½ · 2πr = πr</span>, Yükseklik = <span style="color:var(--gold);">r</span> → Alan = <span style="color:var(--green);">πr²</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAĞ: KONU -->
+    <div>
+      <div class="card">
+        <div class="card-title">Tanım & Formüller</div>
+        <p style="font-size:.82rem;color:var(--muted);line-height:1.8;margin-bottom:14px;">
+          <b style="color:var(--text);">Daire:</b> Bir düzlemde merkeze eşit uzaklıktaki noktaların oluşturduğu kapalı bölgedir.
+          <b style="color:var(--cyan);">r</b> yarıçap, <b style="color:var(--gold);">d = 2r</b> çap olarak gösterilir.
+        </p>
+        <div class="formula-box">
+          <div class="formula">A = π · r²</div>
+          <div class="formula-name">Daire Alanı</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">C = 2π · r = π · d</div>
+          <div class="formula-name">Çember Çevresi</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">r = √(A/π)</div>
+          <div class="formula-name">Alandan Yarıçap</div>
+        </div>
+
+        <div class="osym-box" style="margin-top:16px;">
+          <div class="osym-title">📋 ÖSYM'de Çıktı</div>
+          <p>Çevre/Alan oranı: <b>C/A = 2/r</b>. İki dairenin alanları oranı = yarıçaplar oranının karesi: <b>A₁/A₂ = r₁²/r₂²</b>. Çevre oranı = yarıçaplar oranı.</p>
+        </div>
+      </div>
+
+      <!-- İspat adımları -->
+      <div class="card">
+        <div class="card-title">Alan Formülü İspatı</div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-alan" style="width:14%;"></div></div>
+
+        <div class="step-container">
+          <div class="step active" id="alan-s1">
+            <div class="step-header"><div class="step-num">1</div><div class="step-title">Daireyi dilimlere böl</div></div>
+            <div class="step-body">Daireyi <b>n adet eşit dilime</b> bölelim. Her dilim yaklaşık bir <b>ikizkenar üçgen</b>e benzer.</div>
+          </div>
+          <div class="step" id="alan-s2">
+            <div class="step-header"><div class="step-num">2</div><div class="step-title">Dilimleri diz</div></div>
+            <div class="step-body">Dilimleri almaşık olarak ters çevirerek yan yana diz. <b>n → ∞</b> olunca bir dikdörtgen oluşur.</div>
+          </div>
+          <div class="step" id="alan-s3">
+            <div class="step-header"><div class="step-num">3</div><div class="step-title">Dikdörtgenin boyutları</div></div>
+            <div class="step-body">
+              Dikdörtgenin <b>genişliği</b> = çemberin yarısı = <div class="step-formula">½ · 2πr = πr</div>
+              Dikdörtgenin <b>yüksekliği</b> = yarıçap = <div class="step-formula">r</div>
+            </div>
+          </div>
+          <div class="step" id="alan-s4">
+            <div class="step-header"><div class="step-num">4</div><div class="step-title">Alan = Genişlik × Yükseklik</div></div>
+            <div class="step-body">
+              <div class="step-formula">A = πr · r = πr²</div>
+              İşte bu yüzden daire alanı <b>πr²</b>'dir! ✓
+            </div>
+          </div>
+          <div class="step" id="alan-s5">
+            <div class="step-header"><div class="step-num">5</div><div class="step-title">Çevre formülü</div></div>
+            <div class="step-body">
+              Bir tam tur atıldığında kat edilen yol = çevre.<br>
+              Açısal hız ile: <div class="step-formula">C = 2π · r</div>
+              Tam tur = <b>2π radyan</b>, çarpı yarıçap = çevre.
+            </div>
+          </div>
+        </div>
+
+        <div class="step-nav">
+          <button class="btn btn-ghost" onclick="stepAlan(-1)">← Önceki</button>
+          <span class="step-counter" id="sc-alan">1 / 5</span>
+          <button class="btn btn-primary" onclick="stepAlan(1)">Sonraki →</button>
+        </div>
+      </div>
+
+      <!-- YKS sorusu -->
+      <div class="question-box">
+        <div class="q-label">📝 YKS Tarzı Soru</div>
+        <p>Yarıçapları oranı 2:3 olan iki dairenin alanları toplamı 130π cm² ise küçük dairenin alanı kaç π cm²'dir?</p>
+        <button class="btn-answer" onclick="toggleAnswer('qa-alan')">Cevabı Gör</button>
+        <div class="q-answer" id="qa-alan">
+          <p>r₁ = 2k, r₂ = 3k → π(4k²) + π(9k²) = 130π → 13k² = 130 → k² = 10<br>
+          Küçük daire: A = π·4k² = <b>40π cm²</b></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SAYFA 2: DAİRE DİLİMİ -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-dilim">
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="card-title">İnteraktif Daire Dilimi</div>
+        <canvas id="c-dilim" height="320"></canvas>
+        <div class="slider-row">
+          <span class="slider-label">r</span>
+          <input type="range" min="20" max="120" value="90" oninput="updateDilim()" id="sl-dilim-r">
+          <span class="slider-val" id="sv-dilim-r">90</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">α°</span>
+          <input type="range" min="5" max="355" value="90" oninput="updateDilim()" id="sl-dilim-a">
+          <span class="slider-val" id="sv-dilim-a">90°</span>
+        </div>
+        <div class="result-grid">
+          <div class="result-card">
+            <div class="result-val" id="rv-dilim-a">—</div>
+            <div class="result-lbl">Alan</div>
+          </div>
+          <div class="result-card">
+            <div class="result-val" id="rv-dilim-y">—</div>
+            <div class="result-lbl">Yay Uzunluğu</div>
+          </div>
+          <div class="result-card">
+            <div class="result-val" id="rv-dilim-p">—</div>
+            <div class="result-lbl">Çevre</div>
+          </div>
+          <div class="result-card">
+            <div class="result-val" id="rv-dilim-r">—</div>
+            <div class="result-lbl">Radyan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">Formüller</div>
+        <div class="formula-box">
+          <div class="formula">Yay = (α/360) · 2πr</div>
+          <div class="formula-name">Yay Uzunluğu (α derece)</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">A_dilim = (α/360) · πr²</div>
+          <div class="formula-name">Dilim Alanı</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">l = r · θ &nbsp;&nbsp; (θ radyan)</div>
+          <div class="formula-name">Yay Uzunluğu (radyan)</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">A = ½ · r · l = ½r²θ</div>
+          <div class="formula-name">Dilim Alanı (radyan)</div>
+        </div>
+        <div class="osym-box">
+          <div class="osym-title">📋 ÖSYM'de Çıktı</div>
+          <p><b>Dilim alanı / Tam daire alanı = α / 360</b> oranı çok çıkıyor. Yay uzunluğu/Çevre oranı da aynı = α/360. Radyan-derece dönüşümü: <b>π rad = 180°</b></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">İspat Adımları</div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-dilim" style="width:25%;"></div></div>
+        <div class="step-container">
+          <div class="step active" id="dilim-s1">
+            <div class="step-header"><div class="step-num">1</div><div class="step-title">Oran fikri</div></div>
+            <div class="step-body">Tam daire 360°'dir. α açılı dilim, tam dairenin <b>α/360</b> oranındaki parçasıdır.</div>
+          </div>
+          <div class="step" id="dilim-s2">
+            <div class="step-header"><div class="step-num">2</div><div class="step-title">Yay uzunluğu</div></div>
+            <div class="step-body">
+              Tam çevre = 2πr. Dilimin yay uzunluğu:
+              <div class="step-formula">l = (α/360) · 2πr</div>
+            </div>
+          </div>
+          <div class="step" id="dilim-s3">
+            <div class="step-header"><div class="step-num">3</div><div class="step-title">Dilim alanı</div></div>
+            <div class="step-body">
+              Tam alan = πr². Dilimin alanı:
+              <div class="step-formula">A = (α/360) · πr²</div>
+            </div>
+          </div>
+          <div class="step" id="dilim-s4">
+            <div class="step-header"><div class="step-num">4</div><div class="step-title">Radyan bağlantısı</div></div>
+            <div class="step-body">
+              θ radyan = α·π/180. Yay: <div class="step-formula">l = rθ</div>
+              Alan: <div class="step-formula">A = ½r²θ = ½rl</div>
+              Bu form radyanda çok daha temiz! ✓
+            </div>
+          </div>
+        </div>
+        <div class="step-nav">
+          <button class="btn btn-ghost" onclick="stepDilim(-1)">← Önceki</button>
+          <span class="step-counter" id="sc-dilim">1 / 4</span>
+          <button class="btn btn-primary" onclick="stepDilim(1)">Sonraki →</button>
+        </div>
+      </div>
+
+      <div class="question-box">
+        <div class="q-label">📝 YKS Tarzı Soru</div>
+        <p>Yarıçapı 6 cm olan bir dairenin 120° açılı diliminin alanı kaç cm²'dir? (π=3 alınız)</p>
+        <button class="btn-answer" onclick="toggleAnswer('qa-dilim')">Cevabı Gör</button>
+        <div class="q-answer" id="qa-dilim">
+          <p>A = (120/360)·π·6² = (1/3)·3·36 = <b>36 cm²</b></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SAYFA 3: DAİRE KESİTİ -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-kesit">
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="card-title">İnteraktif Daire Kesiti</div>
+        <canvas id="c-kesit" height="320"></canvas>
+        <div class="slider-row">
+          <span class="slider-label">r</span>
+          <input type="range" min="30" max="120" value="90" oninput="updateKesit()" id="sl-kesit-r">
+          <span class="slider-val" id="sv-kesit-r">90</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label">d</span>
+          <input type="range" min="-115" max="115" value="30" oninput="updateKesit()" id="sl-kesit-d">
+          <span class="slider-val" id="sv-kesit-d">30</span>
+        </div>
+        <div class="result-grid">
+          <div class="result-card">
+            <div class="result-val" id="rv-kesit-a">—</div>
+            <div class="result-lbl">Kesit Alanı</div>
+          </div>
+          <div class="result-card">
+            <div class="result-val" id="rv-kesit-k">—</div>
+            <div class="result-lbl">Kiriş Uzunluğu</div>
+          </div>
+          <div class="result-card">
+            <div class="result-val" id="rv-kesit-y">—</div>
+            <div class="result-lbl">Yay Uzunluğu</div>
+          </div>
+          <div class="result-card">
+            <div class="result-val" id="rv-kesit-ac">—</div>
+            <div class="result-lbl">Merkez Açısı</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">Formüller</div>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;line-height:1.7;">
+          <b style="color:var(--text);">Daire kesiti</b> (circular segment): Bir kiriş ile o kirişin karşısındaki yay arasında kalan bölge. <b style="color:var(--cyan);">d</b> = merkezden kirişe uzaklık.
+        </p>
+        <div class="formula-box">
+          <div class="formula">cos(α/2) = d/r</div>
+          <div class="formula-name">Yarı açı → uzaklık ilişkisi</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">k = 2√(r²-d²)</div>
+          <div class="formula-name">Kiriş Uzunluğu</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">A_kesit = A_dilim - A_üçgen</div>
+          <div class="formula-name">Kesit Alanı</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">A = r²·arccos(d/r) - d√(r²-d²)</div>
+          <div class="formula-name">Tam Kesit Alanı</div>
+        </div>
+        <div class="osym-box">
+          <div class="osym-title">📋 ÖSYM'de Çıktı</div>
+          <p>Kiriş-merkez uzaklık soruları: <b>r² = d² + (k/2)²</b>. Çaplara dik kiriş = kirişi ikiyer. <b>Çap tüm kirişlerin en büyüğüdür</b>.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">İspat Adımları</div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-kesit" style="width:20%;"></div></div>
+        <div class="step-container">
+          <div class="step active" id="kesit-s1">
+            <div class="step-header"><div class="step-num">1</div><div class="step-title">Kiriş & merkez uzaklık</div></div>
+            <div class="step-body">Merkez O, kiriş AB. Merkezden kirişe dik çizilir. Dik uzaklık = <b>d</b>. Pithagoras: <div class="step-formula">r² = d² + (k/2)²</div></div>
+          </div>
+          <div class="step" id="kesit-s2">
+            <div class="step-header"><div class="step-num">2</div><div class="step-title">Merkez açısını bul</div></div>
+            <div class="step-body">
+              Yarım kiriş = √(r²-d²). Merkez yarı açısı:
+              <div class="step-formula">cos(α/2) = d/r</div>
+              <div class="step-formula">α = 2·arccos(d/r)</div>
+            </div>
+          </div>
+          <div class="step" id="kesit-s3">
+            <div class="step-header"><div class="step-num">3</div><div class="step-title">Dilim alanı</div></div>
+            <div class="step-body">
+              α açılı dilim alanı:
+              <div class="step-formula">A_dilim = (α/2π)·πr² = ½r²α</div>
+            </div>
+          </div>
+          <div class="step" id="kesit-s4">
+            <div class="step-header"><div class="step-num">4</div><div class="step-title">Üçgen alanı</div></div>
+            <div class="step-body">
+              OAB üçgeni: taban = kiriş = 2√(r²-d²), yükseklik = d
+              <div class="step-formula">A_üçgen = d·√(r²-d²)</div>
+            </div>
+          </div>
+          <div class="step" id="kesit-s5">
+            <div class="step-header"><div class="step-num">5</div><div class="step-title">Kesit = Dilim - Üçgen</div></div>
+            <div class="step-body">
+              <div class="step-formula">A_kesit = ½r²α - d√(r²-d²)</div>
+              Burada α = 2·arccos(d/r) radyan. ✓
+            </div>
+          </div>
+        </div>
+        <div class="step-nav">
+          <button class="btn btn-ghost" onclick="stepKesit(-1)">← Önceki</button>
+          <span class="step-counter" id="sc-kesit">1 / 5</span>
+          <button class="btn btn-primary" onclick="stepKesit(1)">Sonraki →</button>
+        </div>
+      </div>
+
+      <div class="question-box">
+        <div class="q-label">📝 YKS Tarzı Soru</div>
+        <p>Yarıçapı 10 cm olan bir çemberde merkeze uzaklığı 6 cm olan kirişin uzunluğu kaç cm'dir?</p>
+        <button class="btn-answer" onclick="toggleAnswer('qa-kesit')">Cevabı Gör</button>
+        <div class="q-answer" id="qa-kesit">
+          <p>k/2 = √(r²-d²) = √(100-36) = √64 = 8<br>k = <b>16 cm</b></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SAYFA 4: TEĞET & KİRİŞ -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-teget">
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="card-title">İnteraktif Teğet & Kiriş</div>
+        <canvas id="c-teget" height="340"></canvas>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="setTegetMode('teget')" id="tb-teget">Teğet</button>
+          <button class="btn btn-ghost" onclick="setTegetMode('kiri')" id="tb-kiri">Kiriş</button>
+          <button class="btn btn-ghost" onclick="setTegetMode('iki')" id="tb-iki">İki Teğet</button>
+        </div>
+        <div class="slider-row" style="margin-top:10px;">
+          <span class="slider-label">Açı</span>
+          <input type="range" min="0" max="360" value="45" oninput="updateTeget()" id="sl-teget">
+          <span class="slider-val" id="sv-teget">45°</span>
+        </div>
+        <div id="teget-results" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">Temel Teoremler</div>
+        <table class="tablo">
+          <tr><th>Teorem</th><th>İfade</th></tr>
+          <tr><td>Teğet⊥Yarıçap</td><td style="color:var(--cyan);">OT ⊥ t → ∠OTA = 90°</td></tr>
+          <tr><td>Dış nokta teğetler</td><td style="color:var(--cyan);">|PA| = |PB| (eşit uzunluk)</td></tr>
+          <tr><td>Teğet-Kiriş açısı</td><td style="color:var(--cyan);">∠ = ½ · yay</td></tr>
+          <tr><td>İç kiriş açısı</td><td style="color:var(--cyan);">∠ = ½(yay₁+yay₂)</td></tr>
+          <tr><td>Dış kiriş açısı</td><td style="color:var(--cyan);">∠ = ½|yay₁-yay₂|</td></tr>
+          <tr><td>Güç teoremi</td><td style="color:var(--cyan);">PA·PB = PC·PD</td></tr>
+        </table>
+        <div class="formula-box" style="margin-top:14px;">
+          <div class="formula">d(O,P)² = r² + |PA|²</div>
+          <div class="formula-name">Dış nokta P → Teğet uzunluğu</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">|PA|² = |PO|² - r²</div>
+          <div class="formula-name">Teğet Uzunluğu</div>
+        </div>
+        <div class="osym-box">
+          <div class="osym-title">📋 ÖSYM'de Çıktı</div>
+          <p><b>Teğet-kiriş açısı = ½ yay</b> çok sık. Dış noktadan iki teğet: <b>OPA üçgeni dik açılı</b> (P'de). Güç teoremi: kiriş parçaları çarpımı eşit.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">İspat: Teğet ⊥ Yarıçap</div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-teget" style="width:25%;"></div></div>
+        <div class="step-container">
+          <div class="step active" id="teget-s1">
+            <div class="step-header"><div class="step-num">1</div><div class="step-title">Teğet noktası T</div></div>
+            <div class="step-body">Çember üzerinde T noktasına teğet çiziyoruz. OT yarıçapını çiziyoruz. İddia: <b>OT ⊥ teğet</b>.</div>
+          </div>
+          <div class="step" id="teget-s2">
+            <div class="step-header"><div class="step-num">2</div><div class="step-title">Çelişki ile ispat</div></div>
+            <div class="step-body">OT'nin teğete dik olmadığını varsay. O zaman teğet üzerinde T'den farklı bir Q noktası vardır ki <b>OQ &lt; OT = r</b>.</div>
+          </div>
+          <div class="step" id="teget-s3">
+            <div class="step-header"><div class="step-num">3</div><div class="step-title">Çelişki</div></div>
+            <div class="step-body">OQ &lt; r olduğundan Q çemberin <b>içindedir</b>. Ama teğet çemberi sadece T'de keser. Q aynı zamanda teğet üzerinde → çelişki!</div>
+          </div>
+          <div class="step" id="teget-s4">
+            <div class="step-header"><div class="step-num">4</div><div class="step-title">Sonuç</div></div>
+            <div class="step-body">
+              Varsayım yanlış → <b>OT ⊥ teğet</b> doğrudur. ✓<br>
+              Bu nedenle: <div class="step-formula">|PA|² = |PO|² - r²</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-nav">
+          <button class="btn btn-ghost" onclick="stepTeget(-1)">← Önceki</button>
+          <span class="step-counter" id="sc-teget">1 / 4</span>
+          <button class="btn btn-primary" onclick="stepTeget(1)">Sonraki →</button>
+        </div>
+      </div>
+
+      <div class="question-box">
+        <div class="q-label">📝 YKS Tarzı Soru</div>
+        <p>Çemberin merkezinden 13 cm uzaktaki bir noktadan çizilen teğetin uzunluğu 5 cm ise yarıçap kaç cm'dir?</p>
+        <button class="btn-answer" onclick="toggleAnswer('qa-teget')">Cevabı Gör</button>
+        <div class="q-answer" id="qa-teget">
+          <p>|PA|² = |PO|² - r² → 25 = 169 - r² → r² = 144 → r = <b>12 cm</b></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════ YARDIMCI ═══════════════════════════
+var PI = Math.PI;
+function r2d(r){return r*180/PI;}
+function d2r(d){return d*PI/180;}
+function f(n,dec){
+  dec = dec===undefined?2:dec;
+  return (Math.round(n*Math.pow(10,dec))/Math.pow(10,dec)).toString();
+}
+
+// ═══════════════════════════ NAV ═══════════════════════════════
+function showPage(id){
+  var pages = document.querySelectorAll('.page');
+  var tabs  = document.querySelectorAll('.nav-tab');
+  for(var i=0;i<pages.length;i++) pages[i].classList.remove('active');
+  for(var i=0;i<tabs.length;i++)  tabs[i].classList.remove('active');
+  document.getElementById('page-'+id).classList.add('active');
+  tabs[['alan','dilim','kesit','teget'].indexOf(id)].classList.add('active');
+
+  // Canvas'ları ilk kez çiz
+  if(id==='alan')  { updateAlan(document.getElementById('sl-alan').value); }
+  if(id==='dilim') { updateDilim(); }
+  if(id==='kesit') { updateKesit(); }
+  if(id==='teget') { updateTeget(); }
+}
+
+// ═══════════════════════════ ALAN CANVAS ════════════════════════
+var alanR = 80;
+function updateAlan(val){
+  alanR = parseInt(val);
+  document.getElementById('sv-alan').textContent = val;
+  document.getElementById('rv-alan-a').textContent = f(PI*alanR*alanR/100,1)+'π';
+  document.getElementById('rv-alan-c').textContent = f(2*PI*alanR/100,1)+'π·(r/10)';
+  // Düzgün göster
+  document.getElementById('rv-alan-a').textContent = f(PI*alanR*alanR,0)+' u²';
+  document.getElementById('rv-alan-c').textContent = f(2*PI*alanR,0)+' u';
+  drawAlan();
+}
+
+function drawAlan(){
+  var cv = document.getElementById('c-alan');
+  var ctx = cv.getContext('2d');
+  cv.width = cv.offsetWidth; cv.height = 320;
+  var cx = cv.width/2, cy = cv.height/2;
+  var r = alanR * (Math.min(cv.width,cv.height)*0.38) / 130;
+
+  ctx.clearRect(0,0,cv.width,cv.height);
+
+  // Izgara
+  ctx.strokeStyle='rgba(99,179,237,.06)';ctx.lineWidth=1;
+  for(var i=0;i<cv.width;i+=30){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,cv.height);ctx.stroke();}
+  for(var i=0;i<cv.height;i+=30){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(cv.width,i);ctx.stroke();}
+
+  // Daire gölge
+  ctx.shadowColor='rgba(99,179,237,.3)';ctx.shadowBlur=20;
+  ctx.beginPath();ctx.arc(cx,cy,r,0,2*PI);
+  ctx.fillStyle='rgba(99,179,237,.1)';ctx.fill();
+  ctx.shadowBlur=0;
+
+  // Daire kenarı
+  ctx.beginPath();ctx.arc(cx,cy,r,0,2*PI);
+  ctx.strokeStyle='#63b3ed';ctx.lineWidth=2.5;ctx.stroke();
+
+  // Yarıçap
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+r,cy);
+  ctx.strokeStyle='#f6ad55';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#f6ad55';ctx.font='bold 13px DM Mono';ctx.textAlign='center';
+  ctx.fillText('r = '+alanR,cx+r/2,cy-8);
+
+  // Merkez
+  ctx.beginPath();ctx.arc(cx,cy,4,0,2*PI);
+  ctx.fillStyle='#f6ad55';ctx.fill();
+  ctx.fillStyle='#e2e8f0';ctx.font='11px DM Sans';ctx.textAlign='left';
+  ctx.fillText('O',cx+8,cy-8);
+
+  // Alan formülü
+  ctx.fillStyle='rgba(79,209,199,.9)';ctx.font='bold 15px DM Mono';ctx.textAlign='center';
+  ctx.fillText('A = πr²',cx,cy+r+28);
+  ctx.font='12px DM Mono';ctx.fillStyle='rgba(79,209,199,.6)';
+  ctx.fillText('= π · '+alanR+'² = '+f(PI*alanR*alanR,0)+' u²',cx,cy+r+46);
+}
+
+// ═══════════════════════════ ISPAT ANİMASYON ════════════════════
+var ispatAnim = null;
+var ispatT = 0;
+var N_SLICES = 12;
+
+function playIspat(){
+  resetIspat();
+  ispatT = 0;
+  if(ispatAnim) cancelAnimationFrame(ispatAnim);
+  function loop(){
+    ispatT += 0.008;
+    drawIspat(Math.min(ispatT,1));
+    if(ispatT < 1) ispatAnim = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function resetIspat(){
+  if(ispatAnim) cancelAnimationFrame(ispatAnim);
+  drawIspat(0);
+}
+
+function drawIspat(t){
+  var cv = document.getElementById('c-ispat');
+  var ctx = cv.getContext('2d');
+  cv.width = cv.offsetWidth; cv.height = 200;
+  var W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+
+  var r = Math.min(W,H)*0.22;
+  var n = N_SLICES;
+
+  if(t < 0.5){
+    // Daire dilimlere bölünüyor
+    var prog = t*2;
+    var cx = r+20, cy = H/2;
+    for(var i=0;i<n;i++){
+      var a0 = (i/n)*2*PI - PI/2;
+      var a1 = ((i+1)/n)*2*PI - PI/2;
+      var spread = prog * 0.08 * (i%2===0?1:-1);
+      ctx.beginPath();
+      ctx.moveTo(cx+Math.cos(a0+spread)*2,cy+Math.sin(a0+spread)*2);
+      ctx.arc(cx,cy,r,a0+spread,a1+spread);
+      ctx.closePath();
+      ctx.fillStyle = i%2===0?'rgba(99,179,237,.7)':'rgba(79,209,199,.7)';
+      ctx.fill();
+      ctx.strokeStyle='rgba(6,9,15,.8)';ctx.lineWidth=1;ctx.stroke();
+    }
+    // Label
+    ctx.fillStyle='rgba(99,179,237,.6)';ctx.font='11px DM Mono';ctx.textAlign='center';
+    ctx.fillText('Daire → '+n+' dilim',cx,H-10);
+  } else {
+    // Dikdörtgen oluşuyor
+    var prog = (t-0.5)*2;
+    var sliceW = (2*PI*r/n);
+    var totalW = n*sliceW/2;
+    var startX = (W-totalW)/2;
+    var midY = H/2;
+
+    for(var i=0;i<n;i++){
+      var flip = i%2===0;
+      var tx = startX + i*sliceW/2;
+      var ty = midY;
+      // Her dilim yerleşiyor
+      var px = (1-prog)*( r+20 + Math.cos((i/n)*2*PI)*r*0.7 ) + prog*tx;
+      var py = (1-prog)*( H/2 + Math.sin((i/n)*2*PI)*r*0.7 ) + prog*ty;
+
+      ctx.save();
+      ctx.translate(px,py);
+      if(!flip) ctx.scale(1,-1);
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.arc(0,0,r,-PI/n,PI/n);
+      ctx.closePath();
+      ctx.fillStyle = flip?'rgba(99,179,237,.75)':'rgba(79,209,199,.75)';
+      ctx.fill();
+      ctx.strokeStyle='rgba(6,9,15,.6)';ctx.lineWidth=0.5;ctx.stroke();
+      ctx.restore();
+    }
+
+    if(prog > 0.8){
+      // Boyutları göster
+      ctx.strokeStyle='#f6ad55';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+      ctx.strokeRect(startX, midY-r, totalW, r);
+      ctx.setLineDash([]);
+      ctx.fillStyle='#f6ad55';ctx.font='11px DM Mono';ctx.textAlign='center';
+      ctx.fillText('πr',startX+totalW/2,midY-r-6);
+      ctx.save();ctx.translate(startX-10,midY-r/2);ctx.rotate(-PI/2);
+      ctx.fillText('r',0,0);ctx.restore();
+      ctx.fillStyle='rgba(104,211,145,.9)';ctx.font='bold 12px DM Mono';ctx.textAlign='center';
+      ctx.fillText('A = πr · r = πr²',W/2,H-10);
+    }
+  }
+}
+
+// ═══════════════════════════ DİLİM CANVAS ═══════════════════════
+function updateDilim(){
+  var r   = parseInt(document.getElementById('sl-dilim-r').value);
+  var deg = parseInt(document.getElementById('sl-dilim-a').value);
+  document.getElementById('sv-dilim-r').textContent = r;
+  document.getElementById('sv-dilim-a').textContent = deg+'°';
+  var rad = d2r(deg);
+  var alan = (deg/360)*PI*r*r;
+  var yay  = (deg/360)*2*PI*r;
+  var cevre = yay + 2*r;
+  document.getElementById('rv-dilim-a').textContent = f(alan,1)+' u²';
+  document.getElementById('rv-dilim-y').textContent = f(yay,1)+' u';
+  document.getElementById('rv-dilim-p').textContent = f(cevre,1)+' u';
+  document.getElementById('rv-dilim-r').textContent = f(rad,3)+' rad';
+  drawDilim(r, deg);
+}
+
+function drawDilim(r, deg){
+  var cv = document.getElementById('c-dilim');
+  var ctx = cv.getContext('2d');
+  cv.width = cv.offsetWidth; cv.height = 320;
+  var cx = cv.width/2, cy = cv.height/2;
+  var scale = Math.min(cv.width,cv.height)*0.38 / 130;
+  var R = r * scale;
+
+  ctx.clearRect(0,0,cv.width,cv.height);
+
+  // Izgara
+  ctx.strokeStyle='rgba(99,179,237,.06)';ctx.lineWidth=1;
+  for(var i=0;i<cv.width;i+=30){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,cv.height);ctx.stroke();}
+  for(var i=0;i<cv.height;i+=30){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(cv.width,i);ctx.stroke();}
+
+  var a0 = -PI/2;
+  var a1 = a0 + d2r(deg);
+
+  // Tam daire (soluk)
+  ctx.beginPath();ctx.arc(cx,cy,R,0,2*PI);
+  ctx.strokeStyle='rgba(99,179,237,.2)';ctx.lineWidth=1.5;ctx.stroke();
+
+  // Dilim
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,a0,a1);ctx.closePath();
+  ctx.fillStyle='rgba(99,179,237,.2)';ctx.fill();
+  ctx.strokeStyle='#63b3ed';ctx.lineWidth=2;ctx.stroke();
+
+  // Yay vurgu
+  ctx.beginPath();ctx.arc(cx,cy,R,a0,a1);
+  ctx.strokeStyle='#f6ad55';ctx.lineWidth=3;ctx.stroke();
+
+  // Yarıçaplar
+  ctx.strokeStyle='rgba(104,211,145,.7)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a0)*R,cy+Math.sin(a0)*R);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a1)*R,cy+Math.sin(a1)*R);ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Açı yayı
+  var arcR2 = Math.min(R*0.28,28);
+  ctx.beginPath();ctx.arc(cx,cy,arcR2,a0,a1);
+  ctx.strokeStyle='#b794f4';ctx.lineWidth=2;ctx.stroke();
+  var midA = (a0+a1)/2;
+  ctx.fillStyle='#b794f4';ctx.font='bold 12px DM Mono';ctx.textAlign='center';
+  ctx.fillText(deg+'°',cx+Math.cos(midA)*(arcR2+16),cy+Math.sin(midA)*(arcR2+16));
+
+  // r etiketi
+  ctx.fillStyle='#68d391';ctx.font='12px DM Mono';ctx.textAlign='center';
+  ctx.fillText('r='+r, cx+Math.cos(a0)*R*0.55+15, cy+Math.sin(a0)*R*0.55);
+
+  // Formül
+  ctx.fillStyle='rgba(79,209,199,.8)';ctx.font='bold 13px DM Mono';ctx.textAlign='center';
+  ctx.fillText('A = ('+deg+'/360)·πr²', cx, cv.height-30);
+}
+
+// ═══════════════════════════ KESİT CANVAS ═══════════════════════
+function updateKesit(){
+  var r = parseInt(document.getElementById('sl-kesit-r').value);
+  var d = parseInt(document.getElementById('sl-kesit-d').value);
+  document.getElementById('sv-kesit-r').textContent = r;
+  document.getElementById('sv-kesit-d').textContent = d;
+
+  if(Math.abs(d) >= r){
+    document.getElementById('rv-kesit-a').textContent = d>=r?'0 u²':'Tam daire';
+    document.getElementById('rv-kesit-k').textContent = '0 u';
+    document.getElementById('rv-kesit-y').textContent = '0 u';
+    document.getElementById('rv-kesit-ac').textContent = '—';
+    drawKesit(r, d);
+    return;
+  }
+
+  var halfKiris = Math.sqrt(r*r - d*d);
+  var kiris = 2*halfKiris;
+  var alpha = 2*Math.acos(d/r); // radyan
+  var yay = r*alpha;
+  var alan = 0.5*r*r*alpha - d*halfKiris;
+
+  document.getElementById('rv-kesit-a').textContent = f(alan,1)+' u²';
+  document.getElementById('rv-kesit-k').textContent = f(kiris,1)+' u';
+  document.getElementById('rv-kesit-y').textContent = f(yay,1)+' u';
+  document.getElementById('rv-kesit-ac').textContent = f(r2d(alpha),1)+'°';
+  drawKesit(r, d);
+}
+
+function drawKesit(r, dVal){
+  var cv = document.getElementById('c-kesit');
+  var ctx = cv.getContext('2d');
+  cv.width = cv.offsetWidth; cv.height = 320;
+  var cx = cv.width/2, cy = cv.height/2;
+  var scale = Math.min(cv.width,cv.height)*0.36 / 130;
+  var R = r * scale;
+  var D = dVal * scale;
+
+  ctx.clearRect(0,0,cv.width,cv.height);
+
+  // Izgara
+  ctx.strokeStyle='rgba(99,179,237,.06)';ctx.lineWidth=1;
+  for(var i=0;i<cv.width;i+=30){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,cv.height);ctx.stroke();}
+  for(var i=0;i<cv.height;i+=30){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(cv.width,i);ctx.stroke();}
+
+  // Daire
+  ctx.beginPath();ctx.arc(cx,cy,R,0,2*PI);
+  ctx.strokeStyle='rgba(99,179,237,.35)';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='rgba(99,179,137,.05)';ctx.fill();
+
+  if(Math.abs(dVal) < r){
+    var halfK = Math.sqrt(r*r - dVal*dVal);
+    var halfKsc = halfK*scale;
+    var alpha = 2*Math.acos(dVal/r);
+    var startA = PI + alpha/2;
+    var endA = 2*PI + PI - alpha/2;
+    var kirX = cx + D;
+
+    // Kesit (renkli)
+    ctx.beginPath();
+    ctx.arc(cx,cy,R,startA,endA);
+    ctx.closePath();
+    ctx.fillStyle='rgba(183,148,244,.25)';ctx.fill();
+    ctx.strokeStyle='#b794f4';ctx.lineWidth=2;ctx.stroke();
+
+    // Kiriş
+    ctx.beginPath();ctx.moveTo(kirX, cy-halfKsc);ctx.lineTo(kirX, cy+halfKsc);
+    ctx.strokeStyle='#f6ad55';ctx.lineWidth=2.5;ctx.stroke();
+
+    // Merkez noktası
+    ctx.beginPath();ctx.arc(cx,cy,4,0,2*PI);
+    ctx.fillStyle='#63b3ed';ctx.fill();
+    ctx.fillStyle='#e2e8f0';ctx.font='11px DM Sans';
+    ctx.fillText('O',cx+7,cy-7);
+
+    // d çizgisi (merkezden kirişe dik)
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(kirX,cy);
+    ctx.strokeStyle='rgba(104,211,145,.8)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#68d391';ctx.font='11px DM Mono';ctx.textAlign='center';
+    ctx.fillText('d='+dVal,cx+(D)/2,cy-8);
+
+    // Yarıçap
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(kirX,cy-halfKsc);
+    ctx.strokeStyle='rgba(252,129,129,.7)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#fc8181';ctx.font='11px DM Mono';ctx.textAlign='center';
+    ctx.fillText('r='+r, cx+(kirX-cx)/2+4, cy-halfKsc/2-6);
+
+    // Kiriş etiketi
+    ctx.fillStyle='#f6ad55';ctx.font='11px DM Mono';ctx.textAlign='right';
+    ctx.fillText('k='+f(2*halfK,1), kirX-4, cy+halfKsc/2);
+
+    // Pithagoras
+    ctx.fillStyle='rgba(79,209,199,.7)';ctx.font='12px DM Mono';ctx.textAlign='center';
+    ctx.fillText('r²=d²+(k/2)²', cx, cv.height-14);
+  }
+}
+
+// ═══════════════════════════ TEĞET CANVAS ════════════════════════
+var tegetMode = 'teget';
+function setTegetMode(mode){
+  tegetMode = mode;
+  var btns = ['teget','kiri','iki'];
+  for(var i=0;i<btns.length;i++){
+    var el = document.getElementById('tb-'+btns[i]);
+    el.className = mode===btns[i]?'btn btn-primary':'btn btn-ghost';
+  }
+  updateTeget();
+}
+
+function updateTeget(){
+  var deg = parseInt(document.getElementById('sl-teget').value);
+  document.getElementById('sv-teget').textContent = deg+'°';
+  drawTeget(deg);
+}
+
+function drawTeget(deg){
+  var cv = document.getElementById('c-teget');
+  var ctx = cv.getContext('2d');
+  cv.width = cv.offsetWidth; cv.height = 340;
+  var cx = cv.width/2, cy = cv.height/2;
+  var R = Math.min(cv.width,cv.height)*0.32;
+
+  ctx.clearRect(0,0,cv.width,cv.height);
+
+  // Izgara
+  ctx.strokeStyle='rgba(99,179,237,.06)';ctx.lineWidth=1;
+  for(var i=0;i<cv.width;i+=30){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,cv.height);ctx.stroke();}
+  for(var i=0;i<cv.height;i+=30){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(cv.width,i);ctx.stroke();}
+
+  // Daire
+  ctx.beginPath();ctx.arc(cx,cy,R,0,2*PI);
+  ctx.strokeStyle='#63b3ed';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='rgba(99,179,237,.06)';ctx.fill();
+
+  // Merkez
+  ctx.beginPath();ctx.arc(cx,cy,4,0,2*PI);
+  ctx.fillStyle='#63b3ed';ctx.fill();
+  ctx.fillStyle='#e2e8f0';ctx.font='12px DM Sans';ctx.textAlign='left';ctx.fillText('O',cx+8,cy-8);
+
+  var a = d2r(deg);
+
+  if(tegetMode==='teget'){
+    // Temas noktası
+    var tx = cx + Math.cos(a)*R;
+    var ty = cy + Math.sin(a)*R;
+
+    // Yarıçap OT
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(tx,ty);
+    ctx.strokeStyle='#f6ad55';ctx.lineWidth=2;ctx.stroke();
+
+    // Teğet (OT'ye dik)
+    var len = R*1.2;
+    var perpX = -Math.sin(a);
+    var perpY =  Math.cos(a);
+    ctx.beginPath();
+    ctx.moveTo(tx-perpX*len, ty-perpY*len);
+    ctx.lineTo(tx+perpX*len, ty+perpY*len);
+    ctx.strokeStyle='#fc8181';ctx.lineWidth=2.5;ctx.stroke();
+
+    // Dik açı işareti
+    var s=12;
+    ctx.beginPath();
+    ctx.moveTo(tx-Math.cos(a)*s, ty-Math.sin(a)*s);
+    ctx.lineTo(tx-Math.cos(a)*s+perpX*s, ty-Math.sin(a)*s+perpY*s);
+    ctx.lineTo(tx+perpX*s, ty+perpY*s);
+    ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=1.5;ctx.stroke();
+
+    // T noktası
+    ctx.beginPath();ctx.arc(tx,ty,5,0,2*PI);
+    ctx.fillStyle='#fc8181';ctx.fill();
+    ctx.fillStyle='#fc8181';ctx.font='12px DM Mono';ctx.textAlign='center';
+    ctx.fillText('T',tx+Math.cos(a)*18,ty+Math.sin(a)*18);
+
+    // Etiket
+    ctx.fillStyle='rgba(252,129,129,.8)';ctx.font='12px DM Mono';ctx.textAlign='center';
+    ctx.fillText('OT ⊥ teğet',cx,cv.height-14);
+    ctx.fillStyle='#f6ad55';ctx.font='11px DM Mono';
+    ctx.fillText('r = '+f(R,0)+'u',cx,cv.height-30);
+
+    // Sonuç
+    var res = document.getElementById('teget-results');
+    res.innerHTML = '<div class="formula-box"><div class="formula">∠OTA = 90°</div><div class="formula-name">Teğet Yarıçapa Dik</div></div>';
+
+  } else if(tegetMode==='kiri'){
+    // İki kiriş noktası
+    var a2 = a + d2r(100);
+    var ax = cx+Math.cos(a)*R,  ay = cy+Math.sin(a)*R;
+    var bx = cx+Math.cos(a2)*R, by = cy+Math.sin(a2)*R;
+
+    // Yaylar
+    ctx.beginPath();ctx.arc(cx,cy,R,a,a2);
+    ctx.strokeStyle='#f6ad55';ctx.lineWidth=4;ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,R,a2,a+2*PI);
+    ctx.strokeStyle='rgba(99,179,237,.4)';ctx.lineWidth=2;ctx.stroke();
+
+    // Kiriş
+    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
+    ctx.strokeStyle='#fc8181';ctx.lineWidth=2.5;ctx.stroke();
+
+    // Noktalar
+    [[ax,ay,'A'],[bx,by,'B']].forEach(function(p){
+      ctx.beginPath();ctx.arc(p[0],p[1],5,0,2*PI);ctx.fillStyle='#fc8181';ctx.fill();
+      ctx.fillStyle='#fc8181';ctx.font='12px DM Mono';ctx.textAlign='center';
+      ctx.fillText(p[2],p[0]+Math.cos(a)*20,p[1]+Math.sin(a)*20);
+    });
+
+    // Merkez açısı
+    ctx.beginPath();ctx.arc(cx,cy,25,a,a2);
+    ctx.strokeStyle='#b794f4';ctx.lineWidth=2;ctx.stroke();
+    var midA=(a+a2)/2;
+    ctx.fillStyle='#b794f4';ctx.font='11px DM Mono';ctx.textAlign='center';
+    ctx.fillText('α',cx+Math.cos(midA)*38,cy+Math.sin(midA)*38);
+
+    var yayDeg = 100;
+    var res = document.getElementById('teget-results');
+    res.innerHTML = '<div class="formula-box"><div class="formula">Yay AB = '+yayDeg+'°</div><div class="formula-name">Merkez Açısı = Yay</div></div>';
+
+  } else { // iki teğet
+    var dist = R * 1.8;
+    var px = cx + dist, py = cy;
+    var halfA = Math.acos(R/dist);
+    var t1x = cx+Math.cos(a+halfA-PI/2)*R, t1y = cy+Math.sin(a+halfA-PI/2)*R;
+    var t2x = cx+Math.cos(a-halfA+PI/2)*R, t2y = cy+Math.sin(a-halfA+PI/2)*R;
+
+    // Noktadan teğetler (yaklaşık)
+    var pAngle = d2r(deg);
+    var pa = Math.acos(R/dist);
+    var at1 = pAngle + PI - pa;
+    var at2 = pAngle + PI + pa;
+    var T1x = cx+Math.cos(at1)*R, T1y = cy+Math.sin(at1)*R;
+    var T2x = cx+Math.cos(at2)*R, T2y = cy+Math.sin(at2)*R;
+    var Px  = cx+Math.cos(pAngle)*dist, Py  = cy+Math.sin(pAngle)*dist;
+
+    // Teğetler
+    ctx.beginPath();ctx.moveTo(Px,Py);ctx.lineTo(T1x,T1y);
+    ctx.strokeStyle='#fc8181';ctx.lineWidth=2.5;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(Px,Py);ctx.lineTo(T2x,T2y);
+    ctx.strokeStyle='#fc8181';ctx.lineWidth=2.5;ctx.stroke();
+
+    // Yarıçaplar
+    ctx.strokeStyle='rgba(246,173,85,.6)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(T1x,T1y);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(T2x,T2y);ctx.stroke();
+    ctx.setLineDash([]);
+
+    // OPA çizgisi
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(Px,Py);
+    ctx.strokeStyle='rgba(104,211,145,.5)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Noktalar
+    ctx.beginPath();ctx.arc(Px,Py,5,0,2*PI);ctx.fillStyle='#68d391';ctx.fill();
+    ctx.fillStyle='#68d391';ctx.font='12px DM Mono';ctx.textAlign='center';
+    ctx.fillText('P',Px+Math.cos(pAngle)*18,Py+Math.sin(pAngle)*18);
+
+    [[T1x,T1y,'A'],[T2x,T2y,'B']].forEach(function(p){
+      ctx.beginPath();ctx.arc(p[0],p[1],5,0,2*PI);ctx.fillStyle='#fc8181';ctx.fill();
+      ctx.fillStyle='#fc8181';ctx.font='12px DM Mono';ctx.textAlign='center';
+      ctx.fillText(p[2],p[0]+Math.cos(at1)*18,p[1]+Math.sin(at1)*18);
+    });
+
+    var tLen = Math.sqrt((Px-T1x)*(Px-T1x)+(Py-T1y)*(Py-T1y));
+    var PO   = Math.sqrt((Px-cx)*(Px-cx)+(Py-cy)*(Py-cy));
+    var res  = document.getElementById('teget-results');
+    res.innerHTML = '<div class="formula-box"><div class="formula">|PA|=|PB|='+f(tLen,1)+'u</div><div class="formula-name">Dış noktadan eşit teğet</div></div>';
+  }
+}
+
+// ═══════════════════════════ ADIM SİSTEMİ ══════════════════════
+function makeStepFn(prefix, count, progId, counterId){
+  var cur = 1;
+  return function(dir){
+    var next = cur + dir;
+    if(next < 1 || next > count) return;
+    document.getElementById(prefix+'-s'+cur).classList.remove('active');
+    cur = next;
+    document.getElementById(prefix+'-s'+cur).classList.add('active');
+    document.getElementById(progId).style.width = (cur/count*100)+'%';
+    document.getElementById(counterId).textContent = cur+' / '+count;
+  };
+}
+
+var stepAlan  = makeStepFn('alan',  5, 'prog-alan',  'sc-alan');
+var stepDilim = makeStepFn('dilim', 4, 'prog-dilim', 'sc-dilim');
+var stepKesit = makeStepFn('kesit', 5, 'prog-kesit', 'sc-kesit');
+var stepTeget = makeStepFn('teget', 4, 'prog-teget', 'sc-teget');
+
+// ═══════════════════════════ CEVAP TOGGLE ══════════════════════
+function toggleAnswer(id){
+  var el = document.getElementById(id);
+  if(el.classList.contains('show')) el.classList.remove('show');
+  else el.classList.add('show');
+}
+
+// ═══════════════════════════ BAŞLAT ════════════════════════════
+window.onload = function(){
+  updateAlan(document.getElementById('sl-alan').value);
+  drawIspat(0);
+};
+
+// ══════════════════════════════════════════════════
+// TTS - Chrome Autoplay Fix (content:// uyumlu)
+// ══════════════════════════════════════════════════
+var TTS_SCRIPTS = {"alan":["Merhaba! Daire alanı ve çevresi konusuna hoş geldin. Daire, bir düzlemde merkeze eşit uzaklıktaki noktaların oluşturduğu kapalı bölgedir.","Dairenin alanı pi çarpı r kare formülü ile bulunur. Burada r, merkezden çembere olan uzaklık yani yarıçaptır.","Çevre ise 2 pi r formülü ile hesaplanır. Tam bir tur atıldığında kat edilen yol çevredir.","İspat için daireyi çok sayıda dilime bölelim. Dilimleri yan yana dizersek bir dikdörtgen oluşur.","Dikdörtgenin genişliği pi r, yüksekliği r dir. Alan eşittir pi r kare. İspat tamamdır!"],"dilim":["Daire dilimi konusuna geçelim. Dilim, iki yarıçap ve bir yay ile sınırlı bölgedir.","Merkez açısı alfa olan dilimin yay uzunluğu, tam çevrenin alfa bölü 360 oranıdır.","Yay eşittir alfa bölü 360 çarpı 2 pi r. Dilim alanı da aynı oranla hesaplanır.","ÖSYM de en sık çıkan: dilim alanı bölü tam daire alanı eşittir alfa bölü 360!"],"kesit":["Daire kesiti, bir kiriş ile o kirişin karşısındaki yay arasında kalan bölgedir.","Merkezden kirişe dik uzaklığa d diyoruz. Pisagor ile kiriş uzunluğu bulunur.","Merkez açısını bulmak için: alfa eşittir 2 çarpı arkkosinüs d bölü r.","Kesit alanı için dilim alanından üçgen alanını çıkarırız."],"teget":["Teğet ve kiriş özelliklerine geliyoruz. Teğet, çembere tam olarak bir noktada değen doğrudur.","En temel teorem: teğet, temas noktasındaki yarıçapa diktir. Yani doksan derece.","Dış noktadan çizilen iki teğetin uzunlukları eşittir. P A eşittir P B.","Teğet uzunluğu: P A kare eşittir P O kare eksi r kare."]};
+
+var ttsPlaying = false;
+var ttsCurPage = 'alan';
+var ttsCurStep = 0;
+var ttsReady   = false;
+var ttsVoice   = null;
+
+// Chrome fix: ilk gesture'da sesi başlat ve voices yükle
+function primeTTS(){
+  if(ttsReady) return;
+  if(!window.speechSynthesis) return;
+  // Sessiz utterance - voices'ı yükler ve autoplay kilidini açar
+  var u = new SpeechSynthesisUtterance('');
+  u.volume = 0;
+  u.onend = function(){};
+  window.speechSynthesis.speak(u);
+  // Voices yükle
+  setTimeout(function(){
+    var voices = window.speechSynthesis.getVoices();
+    for(var i=0;i<voices.length;i++){
+      if(voices[i].lang && voices[i].lang.indexOf('tr')===0){ ttsVoice=voices[i]; break; }
+    }
+    if(!ttsVoice && voices.length>0) ttsVoice = voices[0];
+    ttsReady = true;
+  }, 300);
+}
+
+// Sayfa yüklenince voices dinle
+if(window.speechSynthesis){
+  if(window.speechSynthesis.onvoiceschanged !== undefined){
+    window.speechSynthesis.onvoiceschanged = function(){
+      var voices = window.speechSynthesis.getVoices();
+      for(var i=0;i<voices.length;i++){
+        if(voices[i].lang && voices[i].lang.indexOf('tr')===0){ ttsVoice=voices[i]; break; }
+      }
+      if(!ttsVoice && voices.length>0) ttsVoice=voices[0];
+    };
+  }
+}
+
+function toggleTTS(){
+  primeTTS(); // Gesture ile tetikle
+  if(ttsPlaying){ stopTTS(); return; }
+  document.getElementById('ttsBar').classList.add('visible');
+  document.getElementById('ttsToggle').classList.add('active');
+  ttsCurPage = getCurrentPage();
+  ttsCurStep = 0;
+  // Kısa gecikme - voices yüklenmesini bekle
+  setTimeout(startTTSStep, 400);
+}
+
+function getCurrentPage(){
+  var pages=['alan','dilim','kesit','teget'];
+  for(var i=0;i<pages.length;i++){
+    if(document.getElementById('page-'+pages[i]).classList.contains('active')) return pages[i];
+  }
+  return 'alan';
+}
+
+function speakText(text, onDone){
+  var synth = window.speechSynthesis;
+  if(!synth){ setTimeout(onDone, 3000); return; }
+  synth.cancel();
+
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang   = 'tr-TR';
+  u.rate   = 0.88;
+  u.pitch  = 1.05;
+  u.volume = 1.0;
+  if(ttsVoice) u.voice = ttsVoice;
+
+  var done = false;
+  function finish(){
+    if(done) return;
+    done = true;
+    onDone();
+  }
+
+  u.onend   = finish;
+  u.onerror = function(e){
+    // Chrome bazen hata veriyor ama konuşuyor - ignore et
+    if(e.error !== 'interrupted') finish();
+  };
+
+  synth.speak(u);
+
+  // Chrome bug: bazen onend tetiklenmiyor
+  // Kelime sayısına göre max süre hesapla
+  var wordCount = text.split(' ').length;
+  var maxMs = Math.max(wordCount * 600, 4000);
+  setTimeout(function(){
+    if(!done){ done=true; onDone(); }
+  }, maxMs);
+}
+
+function startTTSStep(){
+  var scripts = TTS_SCRIPTS[ttsCurPage];
+  if(!scripts || ttsCurStep >= scripts.length){ stopTTS(); return; }
+  ttsPlaying = true;
+
+  var text = scripts[ttsCurStep];
+  updateTTSDisplay(text, ttsCurStep, scripts.length);
+  syncStepHighlight(ttsCurStep);
+  triggerCanvasAnim(ttsCurPage, ttsCurStep);
+
+  speakText(text, function(){
+    ttsCurStep++;
+    setTimeout(function(){ if(ttsPlaying) startTTSStep(); }, 500);
+  });
+}
+
+function updateTTSDisplay(text, step, total){
+  var el = document.getElementById('ttsText');
+  if(el) el.innerHTML = '<span class="tts-highlight">Adım '+(step+1)+':</span> '+text;
+  var fill = document.getElementById('ttsProgressFill');
+  if(fill) fill.style.width = ((step+1)/total*100)+'%';
+  var info = document.getElementById('ttsStepInfo');
+  if(info) info.textContent = (step+1)+'/'+total;
+}
+
+function stopTTS(){
+  ttsPlaying = false;
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  var bar = document.getElementById('ttsBar');
+  if(bar) bar.classList.remove('visible');
+  document.getElementById('ttsToggle').classList.remove('active');
+  var steps = document.querySelectorAll('.step');
+  for(var i=0;i<steps.length;i++) steps[i].classList.remove('narrating');
+}
+
+function nextTTSStep(){
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  ttsCurStep++;
+  var s=TTS_SCRIPTS[ttsCurPage];
+  if(ttsCurStep>=s.length){ stopTTS(); return; }
+  startTTSStep();
+}
+
+function prevTTSStep(){
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  ttsCurStep=Math.max(0,ttsCurStep-1);
+  startTTSStep();
+}
+
+function syncStepHighlight(stepIdx){
+  var counts={alan:5,dilim:4,kesit:5,teget:4};
+  var count=counts[ttsCurPage]||5;
+  for(var i=1;i<=count;i++){
+    var el=document.getElementById(ttsCurPage+'-s'+i);
+    if(el) el.classList.remove('narrating','active');
+  }
+  var t=document.getElementById(ttsCurPage+'-s'+(stepIdx+1));
+  if(t){ t.classList.add('active','narrating'); t.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+}
+
+function triggerCanvasAnim(page,step){
+  if(page==='alan'&&step===3) playIspat();
+  if(page==='dilim'){
+    var d=[90,120,180,60];
+    document.getElementById('sl-dilim-a').value=d[step]||90;
+    updateDilim();
+  }
+  if(page==='kesit'){
+    var ds=[30,0,-40,60];
+    document.getElementById('sl-kesit-d').value=ds[step]||30;
+    updateKesit();
+  }
+  if(page==='teget'){
+    var m=['teget','teget','iki','kiri'];
+    setTegetMode(m[step]||'teget');
+  }
+}
+
+var _origShowPage=showPage;
+showPage=function(id){
+  _origShowPage(id);
+  if(ttsPlaying){ stopTTS(); ttsCurPage=id; ttsCurStep=0; setTimeout(startTTSStep,400); }
+};
+
+</script>
+
+<!-- TTS TOGGLE BUTONU -->
+<button class="tts-toggle" id="ttsToggle" onclick="toggleTTS()" title="Sesli Anlatım">🎙️</button>
+
+<!-- TTS BAR -->
+<div class="tts-bar" id="ttsBar">
+  <button class="tts-btn tts-play" onclick="ttsPlaying?nextTTSStep():startTTSStep()">▶</button>
+  <button class="tts-btn tts-stop" onclick="stopTTS()">■</button>
+  <div style="flex:1;">
+    <div class="tts-text" id="ttsText">Anlatım başlıyor...</div>
+    <div class="tts-progress"><div class="tts-progress-fill" id="ttsProgressFill" style="width:0%;"></div></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
+    <span class="tts-step-info" id="ttsStepInfo">0/0</span>
+    <div style="display:flex;gap:4px;">
+      <button onclick="prevTTSStep()" style="padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.65rem;cursor:pointer;">◀</button>
+      <button onclick="nextTTSStep()" style="padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.65rem;cursor:pointer;">▶</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
